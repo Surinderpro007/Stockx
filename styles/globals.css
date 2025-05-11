@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 245, 245, 245;
+  --background-end-rgb: 255, 255, 255;
+  --primary-color: 59, 130, 246;
+  --primary-hover: 37, 99, 235;
+  --secondary-color: 107, 114, 128;
+  --accent-color: 245, 158, 11;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 17, 24, 39;
+    --background-end-rgb: 31, 41, 55;
+    --primary-color: 96, 165, 250;
+    --primary-hover: 59, 130, 246;
+    --secondary-color: 156, 163, 175;
+    --accent-color: 251, 191, 36;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+}
+
+/* Responsive utilities */
+@layer utilities {
+  .responsive-container {
+    @apply w-full px-4 md:px-6 lg:px-8 max-w-7xl mx-auto;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg;
+  }
+  
+  .card-hover {
+    @apply hover:scale-105 hover:shadow-lg transition-all duration-300;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn-primary {
+    @apply bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-sm hover:shadow flex items-center justify-center;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded-lg transition-colors shadow-sm hover:shadow;
+  }
+  
+  .btn-accent {
+    @apply bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-sm hover:shadow;
+  }
+  
+  /* Form elements */
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white;
+  }
+  
+  .form-group {
+    @apply mb-4;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+  
+  /* Typography */
+  .heading-1 {
+    @apply text-3xl md:text-4xl font-bold text-gray-900 dark:text-white;
+  }
+  
+  .heading-2 {
+    @apply text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100;
+  }
+  
+  .heading-3 {
+    @apply text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100;
+  }
+  
+  /* Layout utilities */
+  .section {
+    @apply py-8 md:py-12;
+  }
+} 
