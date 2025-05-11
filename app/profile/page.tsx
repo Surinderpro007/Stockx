@@ -234,13 +234,13 @@ export default function ProfilePage() {
 
           <div className="flex flex-col md:flex-row">
             {/* Profile Image Section */}
-            <div className="md:w-1/3 flex flex-col items-center mb-6 md:mb-0">
-              <div className="relative">
-                <div className="h-32 w-32 md:h-40 md:w-40 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 mb-4 flex items-center justify-center">
+            <div className="md:w-1/3 md:pr-8">
+              <div className="relative mb-6">
+                <div className="h-32 w-32 rounded-full overflow-hidden border-2 border-gray-200 dark:bg-gray-700 mb-4 flex items-center justify-center">
                   {previewImage ? (
-                    <img 
-                      src={previewImage} 
-                      alt="Profile" 
+                    <img
+                      src={previewImage}
+                      alt="Profile"
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={triggerFileInput}
-                    className="absolute bottom-4 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors"
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors"
                   >
                     <FaCamera />
                   </button>
@@ -264,12 +264,12 @@ export default function ProfilePage() {
                   className="hidden"
                 />
               </div>
-              
+
               {!isEditing ? (
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
-                  className="mt-2 flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                  className="text-blue-600 font-medium hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                 >
                   <FaEdit className="mr-2" /> Edit Profile
                 </button>
@@ -278,12 +278,12 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={handleSaveProfile}
+                    className="flex items-center justify-center w-full text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
                     disabled={saving}
-                    className="w-full flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
                   >
                     {saving ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -298,7 +298,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="w-full flex items-center justify-center text-gray-700 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 px-4 py-2 rounded-lg"
+                    className="flex items-center justify-center w-full text-gray-800 dark:text-gray-200 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 px-4 py-2 rounded-lg"
                   >
                     <FaTimes className="mr-2" /> Cancel
                   </button>
@@ -307,8 +307,8 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Information Section */}
-            <div className="md:w-2/3 md:pl-8">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Account Information</h3>
+            <div className="md:w-2/3">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Personal Information</h3>
               
               <div className="space-y-6">
                 <div>
@@ -325,18 +325,18 @@ export default function ProfilePage() {
                       className="input-field"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-white text-lg">{userData.name || 'Not set'}</p>
+                    <p className="text-gray-900 dark:text-white font-medium">{userData.name || 'Not set'}</p>
                   )}
                 </div>
-
+                
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     <FaEnvelope className="inline-block mr-2" /> Email Address
                   </label>
-                  <p className="text-gray-900 dark:text-white text-lg">{userData.email}</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{userData.email}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Your email address is used for login and cannot be changed</p>
                 </div>
-
+                
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     <FaPhone className="inline-block mr-2" /> Phone Number
@@ -352,42 +352,41 @@ export default function ProfilePage() {
                       placeholder="Your phone number"
                     />
                   ) : (
-                    <p className="text-gray-900 dark:text-white text-lg">{userData.phone || 'Not set'}</p>
+                    <p className="text-gray-900 dark:text-white font-medium">{userData.phone || 'Not set'}</p>
                   )}
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Account Security Section */}
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 md:p-8">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Account Security</h3>
           
-          <div className="space-y-4">
-            <div>
-              <Link 
-                href="/change-password" 
-                className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Change Password
-              </Link>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                It's a good practice to change your password regularly for security purposes.
-              </p>
-            </div>
+          <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Security</h3>
             
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">Two-Factor Authentication</h4>
-              <p className="text-gray-600 dark:text-gray-300 mb-3">
-                Add an extra layer of security to your account by enabling two-factor authentication.
-              </p>
-              <button 
-                type="button" 
-                className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg transition-colors"
-              >
-                Setup 2FA
-              </button>
+            <div className="space-y-4">
+              <div>
+                <Link
+                  href="/change-password"
+                  className="block w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg transition-colors"
+                >
+                  Change Password
+                </Link>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  It's a good practice to change your password regularly for better security
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Two-Factor Authentication</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  Add an extra layer of security to your account by enabling two-factor authentication.
+                </p>
+                <button
+                  type="button"
+                  className="block w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg transition-colors"
+                >
+                  Setup 2FA
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -113,9 +113,9 @@ export async function POST(req: NextRequest) {
         user.portfolio = [];
       }
 
-      // Update user portfolio - Fix: Use proper type checking and make sure portfolio is correctly accessed
+      // Update user portfolio
       const existingStockIndex = user.portfolio.findIndex(
-        (stock) => stock.symbol === stockSymbol
+        (stock: any) => stock.symbol === stockSymbol
       );
 
       if (existingStockIndex !== -1) {
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
           stockId: stockSymbol.toLowerCase(),
           symbol: stockSymbol,
           companyName: stockName,
-          quantity: quantity,
+          quantity,
           avgBuyPrice: price,
         });
       }
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
     } else if (type === 'SELL') {
       // Find stock in portfolio
       const stockIndex = user.portfolio.findIndex(
-        (stock) => stock.symbol === stockSymbol
+        (stock: any) => stock.symbol === stockSymbol
       );
 
       if (stockIndex === -1) {

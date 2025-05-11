@@ -110,4 +110,18 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [MongoDB](https://www.mongodb.com/)
 - [NextAuth.js](https://next-auth.js.org/)
 - [Chart.js](https://www.chartjs.org/)
-- [React Icons](https://react-icons.github.io/react-icons/) 
+- [React Icons](https://react-icons.github.io/react-icons/)
+
+## Deploying to Vercel
+
+This project is optimized for deployment on Vercel. Follow these steps to deploy:
+
+1. Push your code to a GitHub repository
+2. Go to [Vercel](https://vercel.com) and sign up/login with your GitHub account
+3. Click "Import Project" and select your repository
+4. Configure your project:
+   - Framework Preset: Next.js
+   - Environment Variables: Add all variables from .env.example with proper values
+5. Click "Deploy"
+
+Once deployed, Vercel will automatically handle builds for future commits to your repository. 

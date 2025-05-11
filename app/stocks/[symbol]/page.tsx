@@ -208,174 +208,75 @@ export default function StockDetail() {
     const numPoints = dataPoints[period];
     const data = [];
     
-    let basePrice = parseFloat(getRandomPrice());
-    const volatility = period === '1d' ? 0.005 : period === '1m' ? 0.02 : 0.1;
-    
-    const startDate = new Date();
-    let timeUnit;
-    
-    switch (period) {
-      case '1d':
-        startDate.setHours(0, 0, 0, 0);
-        timeUnit = 60 * 60 * 1000 / 24; // hourly
-        break;
-      case '1m':
-        startDate.setDate(startDate.getDate() - 30);
-        timeUnit = 24 * 60 * 60 * 1000; // daily
-        break;
-      case '6m':
-        startDate.setMonth(startDate.getMonth() - 6);
-        timeUnit = 24 * 60 * 60 * 1000; // daily
-        break;
-      case '1y':
-        startDate.setFullYear(startDate.getFullYear() - 1);
-        timeUnit = 24 * 60 * 60 * 1000; // daily
-        break;
-      case 'max':
-        startDate.setFullYear(startDate.getFullYear() - 6);
-        timeUnit = 7 * 24 * 60 * 60 * 1000; // weekly
-        break;
+    // Start with a realistic base price that matches the current stock price
+    let basePrice = stock ? parseFloat(stock.price) : 100;
+    // Ensure we have a valid number
+    if (isNaN(basePrice) || basePrice <= 0) {
+      basePrice = 100;
     }
     
+    const volatility = period === '1d' ? 0.01 : period === '1m' ? 0.03 : 0.1;
+    let trend = Math.random() > 0.5 ? 1 : -1; // Randomly choose upward or downward trend
+    
+    // Generate data points with more prominent changes
     for (let i = 0; i < numPoints; i++) {
-      const timestamp = new Date(startDate.getTime() + (i * timeUnit));
+      // Occasionally flip the trend to create more realistic patterns
+      if (i % Math.floor(numPoints / 8) === 0 && i > 0) {
+        trend = -trend;
+      }
       
-      // Create random price changes
-      const change = (Math.random() - 0.5) * volatility * basePrice;
+      // Create more noticeable changes
+      const change = basePrice * volatility * (Math.random() * 0.8 + 0.2) * trend;
       basePrice += change;
       
-      // Generate more details for candlestick
-      const open = basePrice;
-      const close = basePrice + (Math.random() - 0.5) * volatility * basePrice;
-      const high = Math.max(open, close) + Math.random() * volatility * basePrice;
-      const low = Math.min(open, close) - Math.random() * volatility * basePrice;
+      // Ensure we don't go too low
+      if (basePrice < 5) basePrice = 5 + Math.random() * 10;
       
       data.push({
-        timestamp,
-        price: basePrice,
-        open,
-        high,
-        close,
-        low,
-        volume: Math.floor(Math.random() * 10000000) + 1000000
+        time: i,
+        value: parseFloat(basePrice.toFixed(2)), // Convert to number for better chart rendering
+        open: parseFloat((basePrice - Math.random() * 5).toFixed(2)),
+        close: parseFloat(basePrice.toFixed(2)),
+        high: parseFloat((basePrice + Math.random() * 3).toFixed(2)),
+        low: parseFloat((basePrice - Math.random() * 3).toFixed(2)),
+        volume: Math.floor(Math.random() * 10000000)
       });
     }
     
     setChartData(data);
   };
-  
-  const formatChartDate = (timestamp: Date) => {
-    if (chartTimePeriod === '1d') {
-      return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (chartTimePeriod === '1m' || chartTimePeriod === '6m') {
-      return timestamp.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    } else {
-      return timestamp.toLocaleDateString([], { month: 'short', year: '2-digit' });
-    }
+
+  const formatCurrency = (value: string | number) => {
+    if (typeof value === 'string') value = parseFloat(value);
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(value);
   };
-  
-  const renderChart = () => {
-    if (!chartData.length) return null;
-    
-    // Determine min and max values for chart scaling
-    const prices = chartData.map(d => d.price);
-    const minPrice = Math.min(...prices) * 0.98;
-    const maxPrice = Math.max(...prices) * 1.02;
-    const priceRange = maxPrice - minPrice;
-    
-    // Calculate chart dimensions and scaling
-    const chartWidth = 1000;
-    const chartHeight = 400;
-    const xScale = chartWidth / (chartData.length - 1);
-    const yScale = chartHeight / priceRange;
-    
-    // Generate points for line or area chart
-    const points = chartData.map((d, i) => {
-      const x = i * xScale;
-      const y = chartHeight - ((d.price - minPrice) * yScale);
-      return `${x},${y}`;
-    }).join(' ');
-    
-    // Generate path for area chart
-    const areaPath = `${points} ${chartWidth},${chartHeight} 0,${chartHeight}`;
-    
-    // Determine if price movement is positive
-    const isPositive = chartData[chartData.length - 1].price > chartData[0].price;
-    const lineColor = isPositive ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)';
-    const areaColor = isPositive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
-    
-    return (
-      <div className="relative w-full overflow-hidden" style={{ height: `${chartHeight}px` }}>
-        <svg width="100%" height="100%" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none">
-          {chartStyle === 'area' && (
-            <polygon 
-              points={areaPath} 
-              fill={areaColor}
-              stroke="none"
-            />
-          )}
-          
-          {(chartStyle === 'line' || chartStyle === 'area') && (
-            <polyline
-              points={points}
-              fill="none"
-              stroke={lineColor}
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          )}
-          
-          {chartStyle === 'candle' && chartData.map((d, i) => {
-            const x = i * xScale;
-            const candleWidth = Math.max(4, xScale * 0.8);
-            const open = chartHeight - ((d.open - minPrice) * yScale);
-            const close = chartHeight - ((d.close - minPrice) * yScale);
-            const high = chartHeight - ((d.high - minPrice) * yScale);
-            const low = chartHeight - ((d.low - minPrice) * yScale);
-            const isCandleUp = d.close >= d.open;
-            const candleColor = isCandleUp ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)';
-            
-            return (
-              <g key={i}>
-                {/* Wick */}
-                <line 
-                  x1={x} 
-                  y1={high} 
-                  x2={x} 
-                  y2={low} 
-                  stroke={candleColor} 
-                  strokeWidth="1" 
-                />
-                
-                {/* Candle body */}
-                <rect 
-                  x={x - candleWidth / 2} 
-                  y={isCandleUp ? close : open} 
-                  width={candleWidth} 
-                  height={Math.abs(close - open)}
-                  fill={candleColor}
-                />
-              </g>
-            );
-          })}
-        </svg>
-        
-        {/* X-axis labels */}
-        <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 dark:text-gray-400 pb-2">
-          <span>{formatChartDate(chartData[0].timestamp)}</span>
-          <span>{formatChartDate(chartData[Math.floor(chartData.length / 2)].timestamp)}</span>
-          <span>{formatChartDate(chartData[chartData.length - 1].timestamp)}</span>
-        </div>
-      </div>
-    );
+
+  const formatQuantity = (value: number) => {
+    return new Intl.NumberFormat('en-US').format(value);
+  };
+
+  const calculateTotalCost = () => {
+    if (!stock) return 0;
+    return Number(stock.price) * quantity;
+  };
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (isNaN(value) || value < 1) {
+      setQuantity(1);
+    } else {
+      setQuantity(value);
+    }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading stock data...</p>
         </div>
       </div>
@@ -385,11 +286,12 @@ export default function StockDetail() {
   if (!stock) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
+        <div className="flex flex-col items-center">
+          <div className="text-red-600 text-6xl mb-4">❌</div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Stock Not Found</h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">The stock symbol you're looking for doesn't exist or couldn't be loaded.</p>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">We couldn't find the stock you're looking for.</p>
           <Link href="/stocks" className="btn-primary">
-            Back to Stocks
+            Browse All Stocks
           </Link>
         </div>
       </div>
@@ -400,13 +302,13 @@ export default function StockDetail() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
+        <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+          <div className="flex items-center space-x-2 mb-4 md:mb-0">
             <FaChartLine className="text-blue-600 text-2xl" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">NextStocks</h1>
           </div>
           <div className="flex items-center">
-            <nav className="hidden md:flex items-center space-x-6 mr-4">
+            <nav className="flex items-center space-x-6 mr-4">
               <Link href="/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                 Dashboard
               </Link>
@@ -442,348 +344,405 @@ export default function StockDetail() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Back Button */}
         <div className="mb-6">
           <Link href="/stocks" className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-            <FaArrowLeft className="mr-2" />
-            Back to All Stocks
+            <FaArrowLeft className="mr-2" /> Back to Stocks
           </Link>
         </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{stock.symbol}</h2>
-              <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">{stock.companyName}</p>
-              
-              <div className="flex items-baseline mb-6">
-                <span className="text-4xl font-bold text-gray-900 dark:text-white mr-3">${stock.price}</span>
-                <span className={`text-lg font-medium flex items-center ${Number(stock.change) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {Number(stock.change) >= 0 ? <FaCaretUp className="mr-1" /> : <FaCaretDown className="mr-1" />}
-                  {Number(stock.change) >= 0 ? '+' : ''}{stock.change} ({stock.changePercent}%)
-                </span>
+        
+        {/* Stock Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{stock.symbol}</h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300">{stock.companyName}</p>
+          </div>
+          <div className="mt-4 md:mt-0 flex items-center">
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(stock.price)}</p>
+              <div className={`flex items-center justify-end ${parseFloat(stock.change) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {parseFloat(stock.change) >= 0 ? <FaCaretUp className="mr-1" /> : <FaCaretDown className="mr-1" />}
+                <span>{stock.change} ({stock.changePercent}%)</span>
               </div>
-            </div>
-
-            <div className="flex space-x-2 mt-2 md:mt-0">
-              <button 
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'chart' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}
-                onClick={() => setActiveTab('chart')}
-              >
-                <FaChartLine className="inline mr-2" /> Chart
-              </button>
-              <button 
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'account' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}
-                onClick={() => setActiveTab('account')}
-              >
-                <FaWallet className="inline mr-2" /> Account
-              </button>
             </div>
           </div>
-
-          {activeTab === 'chart' ? (
-            <div className="mt-6">
-              {/* Chart Controls */}
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
-                <div className="flex space-x-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium rounded-md ${chartTimePeriod === '1d' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}
-                    onClick={() => setChartTimePeriod('1d')}
-                  >
-                    1D
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium rounded-md ${chartTimePeriod === '1m' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}
-                    onClick={() => setChartTimePeriod('1m')}
-                  >
-                    1M
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium rounded-md ${chartTimePeriod === '6m' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}
-                    onClick={() => setChartTimePeriod('6m')}
-                  >
-                    6M
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium rounded-md ${chartTimePeriod === '1y' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}
-                    onClick={() => setChartTimePeriod('1y')}
-                  >
-                    1Y
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium rounded-md ${chartTimePeriod === 'max' ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}
-                    onClick={() => setChartTimePeriod('max')}
-                  >
-                    MAX
-                  </button>
-                </div>
-
-                <div className="flex space-x-2">
-                  <button 
-                    className={`p-2 rounded-md ${chartStyle === 'line' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
-                    onClick={() => setChartStyle('line')}
-                    title="Line Chart"
-                  >
-                    <FaChartLine />
-                  </button>
-                  <button 
-                    className={`p-2 rounded-md ${chartStyle === 'area' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
-                    onClick={() => setChartStyle('area')}
-                    title="Area Chart"
-                  >
-                    <FaChartArea />
-                  </button>
-                  <button 
-                    className={`p-2 rounded-md ${chartStyle === 'candle' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
-                    onClick={() => setChartStyle('candle')}
-                    title="Candlestick Chart"
-                  >
-                    <FaChartBar />
-                  </button>
-                </div>
-              </div>
-
-              {/* Chart */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 h-96 mb-6">
-                {renderChart()}
-              </div>
-
-              {/* Price Summary */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
-                <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Open</p>
-                  <p className="text-lg font-medium text-gray-900 dark:text-white">${stock.open}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">High</p>
-                  <p className="text-lg font-medium text-gray-900 dark:text-white">${stock.high}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Low</p>
-                  <p className="text-lg font-medium text-gray-900 dark:text-white">${stock.low}</p>
-                </div>
-                <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Volume</p>
-                  <p className="text-lg font-medium text-gray-900 dark:text-white">{stock.volume}</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Account Info Tab */
-            <div className="mt-6 bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Account</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-2">Balance: <span className="font-semibold">${userPortfolio?.accountBalance.toFixed(2)}</span></p>
-              
-              {userPortfolio?.stockHoldings ? (
-                <div className="mt-4">
-                  <h4 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Your {stock.symbol} Holdings</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Shares Owned</p>
-                      <p className="text-lg font-medium text-gray-900 dark:text-white">{userPortfolio.stockHoldings.quantity}</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Average Price</p>
-                      <p className="text-lg font-medium text-gray-900 dark:text-white">${userPortfolio.stockHoldings.avgBuyPrice.toFixed(2)}</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Current Value</p>
-                      <p className="text-lg font-medium text-gray-900 dark:text-white">${(userPortfolio.stockHoldings.quantity * Number(stock.price)).toFixed(2)}</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Unrealized Gain/Loss</p>
-                      <p className={`text-lg font-medium ${(Number(stock.price) - userPortfolio.stockHoldings.avgBuyPrice) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        ${((Number(stock.price) - userPortfolio.stockHoldings.avgBuyPrice) * userPortfolio.stockHoldings.quantity).toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg mt-4">
-                  <p className="text-gray-600 dark:text-gray-300">You don't own any shares of {stock.symbol} yet.</p>
-                  <p className="text-gray-600 dark:text-gray-300 mt-2">Use the form below to start investing.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Stock Details */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
-            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Market Cap</p>
-              <p className="text-lg font-medium text-gray-900 dark:text-white">{stock.marketCap}</p>
-            </div>
-            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Volume</p>
-              <p className="text-lg font-medium text-gray-900 dark:text-white">{stock.volume}</p>
-            </div>
-            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <p className="text-sm text-gray-500 dark:text-gray-400">High / Low</p>
-              <p className="text-lg font-medium text-gray-900 dark:text-white">${stock.high} / ${stock.low}</p>
-            </div>
-            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Open / Prev Close</p>
-              <p className="text-lg font-medium text-gray-900 dark:text-white">${stock.open} / ${stock.previousClose}</p>
-            </div>
+        </div>
+        
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-300">
+            {error}
           </div>
-
-          {/* Transaction Form */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
-            <div className="flex items-center mb-6">
-              <FaExchangeAlt className="text-primary-600 text-xl mr-3" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Trade this Stock</h3>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900 text-red-800 dark:text-red-300 rounded-md p-4 mb-6">
-                {error}
+        )}
+        
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-300">
+            {success}
+          </div>
+        )}
+        
+        {/* Mobile Tabs */}
+        <div className="block md:hidden mb-6">
+          <div className="flex space-x-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+            <button 
+              onClick={() => setActiveTab('chart')} 
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${
+                activeTab === 'chart' 
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              Chart & Info
+            </button>
+            <button 
+              onClick={() => setActiveTab('account')} 
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${
+                activeTab === 'account' 
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              Trade
+            </button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Stock Chart & Info Section */}
+          <div className={`md:col-span-2 ${activeTab === 'chart' ? 'block' : 'hidden md:block'}`}>
+            {/* Chart Controls */}
+            <div className="flex flex-wrap justify-between items-center mb-4">
+              <div className="flex space-x-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg mb-3 sm:mb-0">
+                {['1d', '1m', '6m', '1y', 'max'].map((period) => (
+                  <button 
+                    key={period}
+                    onClick={() => setChartTimePeriod(period as any)} 
+                    className={`py-1 px-3 text-xs font-medium rounded-md ${
+                      chartTimePeriod === period 
+                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {period.toUpperCase()}
+                  </button>
+                ))}
               </div>
-            )}
-
-            {success && (
-              <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-900 text-green-800 dark:text-green-300 rounded-md p-4 mb-6">
-                {success}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Transaction Type
-                  </label>
-                  <div className="flex space-x-4">
-                    <button
-                      type="button"
-                      onClick={() => setTransactionType('BUY')}
-                      className={`flex-1 py-2 px-4 rounded-md ${
-                        transactionType === 'BUY'
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      Buy
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTransactionType('SELL')}
-                      className={`flex-1 py-2 px-4 rounded-md ${
-                        transactionType === 'SELL'
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      }`}
-                      disabled={!userPortfolio?.stockHoldings}
-                    >
-                      Sell
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Quantity
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      id="quantity"
-                      min="1"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="input-field"
-                    />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <span className="text-gray-500 dark:text-gray-400">shares</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Price per Share
-                  </label>
-                  <div className="input-field bg-gray-50 dark:bg-gray-700 flex items-center">
-                    <span className="text-gray-500 dark:text-gray-400 mr-1">$</span>
-                    <span className="text-gray-900 dark:text-white">{stock.price}</span>
-                  </div>
-                </div>
-
-                <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-700 dark:text-gray-300">Subtotal:</span>
-                    <span className="text-gray-900 dark:text-white">${(Number(stock.price) * quantity).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-700 dark:text-gray-300">Fee:</span>
-                    <span className="text-gray-900 dark:text-white">$0.00</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Total:</span>
-                    <span className="font-medium text-gray-900 dark:text-white">${(Number(stock.price) * quantity).toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleTransaction}
-                  disabled={processing || (transactionType === 'SELL' && !userPortfolio?.stockHoldings)}
-                  className={`btn-primary w-full justify-center flex items-center ${
-                    transactionType === 'BUY' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+              <div className="flex space-x-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                <button 
+                  onClick={() => setChartStyle('line')} 
+                  className={`py-1 px-3 text-xs font-medium rounded-md ${
+                    chartStyle === 'line' 
+                      ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  {processing ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <FaMoneyBillWave className="mr-2" />
-                      {transactionType === 'BUY' ? 'Buy' : 'Sell'} Shares
-                    </>
-                  )}
+                  <FaChartLine className="inline-block" />
+                </button>
+                <button 
+                  onClick={() => setChartStyle('area')} 
+                  className={`py-1 px-3 text-xs font-medium rounded-md ${
+                    chartStyle === 'area' 
+                      ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <FaChartArea className="inline-block" />
+                </button>
+                <button 
+                  onClick={() => setChartStyle('candle')} 
+                  className={`py-1 px-3 text-xs font-medium rounded-md ${
+                    chartStyle === 'candle' 
+                      ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <FaChartBar className="inline-block" />
                 </button>
               </div>
-
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-                  {transactionType === 'BUY' ? 'Buying' : 'Selling'} Power
-                </h4>
-                
-                {transactionType === 'BUY' ? (
-                  <>
-                    <p className="text-gray-600 dark:text-gray-300 mb-2">
-                      Available to buy: ${userPortfolio?.accountBalance.toFixed(2)}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      Maximum shares you can buy: {Math.floor(userPortfolio?.accountBalance / Number(stock.price) || 0)}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-gray-600 dark:text-gray-300 mb-2">
-                      Available to sell: {userPortfolio?.stockHoldings ? userPortfolio.stockHoldings.quantity : 0} shares
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      Current value: ${userPortfolio?.stockHoldings 
-                        ? (userPortfolio.stockHoldings.quantity * Number(stock.price)).toFixed(2) 
-                        : '0.00'}
-                    </p>
-                  </>
-                )}
-                
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900 rounded-lg p-4">
-                  <h5 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">Trading Tips</h5>
-                  <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-disc list-inside">
-                    <li>Consider market trends before making a decision</li>
-                    <li>Diversify your portfolio to manage risk</li>
-                    <li>Regularly review and rebalance your investments</li>
-                    <li>Invest based on your research and financial goals</li>
-                  </ul>
+            </div>
+            
+            {/* Chart Placeholder */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
+              <div className="aspect-w-16 aspect-h-9">
+                <div className="w-full h-full rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                  {/* Interactive chart display */}
+                  <div className="relative w-full h-full">
+                    <div className="absolute inset-0 flex flex-col">
+                      {/* Chart Area */}
+                      <div className="flex-grow flex items-end">
+                        <svg className="w-full h-[80%]" viewBox="0 0 1000 400" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor={theme === 'dark' ? '#3b82f6' : '#3b82f6'} stopOpacity="0.2" />
+                              <stop offset="100%" stopColor={theme === 'dark' ? '#3b82f6' : '#3b82f6'} stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                          
+                          {chartData.length > 0 && (
+                            <>
+                              {/* Find min and max values for proper scaling */}
+                              {(() => {
+                                const values = chartData.map(d => d.value);
+                                const min = Math.min(...values) * 0.95; // Add some padding
+                                const max = Math.max(...values) * 1.05;
+                                const range = max - min;
+                                
+                                // Calculate Y position based on value
+                                const getY = (value: number) => {
+                                  return 400 - ((value - min) / range) * 380;
+                                };
+                                
+                                if (chartStyle === 'line') {
+                                  return (
+                                    <path 
+                                      d={`M0,${getY(chartData[0].value)} ${chartData.map((d, i) => 
+                                        `L${i * (1000 / (chartData.length - 1))},${getY(d.value)}`).join(' ')}`}
+                                      fill="none" 
+                                      stroke={theme === 'dark' ? '#3b82f6' : '#3b82f6'} 
+                                      strokeWidth="3" 
+                                    />
+                                  );
+                                }
+                                
+                                if (chartStyle === 'area') {
+                                  return (
+                                    <path 
+                                      d={`M0,${getY(chartData[0].value)} ${chartData.map((d, i) => 
+                                        `L${i * (1000 / (chartData.length - 1))},${getY(d.value)}`).join(' ')} 
+                                        L${1000},${getY(chartData[chartData.length-1].value)} L${1000},400 L0,400 Z`}
+                                      fill="url(#chartGradient)" 
+                                      stroke={theme === 'dark' ? '#3b82f6' : '#3b82f6'} 
+                                      strokeWidth="3" 
+                                    />
+                                  );
+                                }
+                                
+                                if (chartStyle === 'candle') {
+                                  return chartData.map((d, i) => {
+                                    const x = i * (1000 / chartData.length);
+                                    const width = 1000 / chartData.length / 2;
+                                    const isPositive = d.close > d.open;
+                                    const fillColor = isPositive ? '#22c55e' : '#ef4444';
+                                    
+                                    return (
+                                      <g key={i}>
+                                        <line 
+                                          x1={x + width / 2} 
+                                          y1={getY(d.high)} 
+                                          x2={x + width / 2} 
+                                          y2={getY(d.low)} 
+                                          stroke={fillColor} 
+                                          strokeWidth="1.5"
+                                        />
+                                        <rect 
+                                          x={x + width / 4} 
+                                          y={getY(Math.max(d.open, d.close))} 
+                                          width={width} 
+                                          height={Math.abs(getY(d.open) - getY(d.close))} 
+                                          fill={fillColor} 
+                                        />
+                                      </g>
+                                    );
+                                  });
+                                }
+                                
+                                return null;
+                              })()}
+                            </>
+                          )}
+                        </svg>
+                      </div>
+                      
+                      {/* X-axis labels */}
+                      <div className="h-6 flex justify-between text-xs text-gray-500 dark:text-gray-400 px-2">
+                        {chartTimePeriod === '1d' && ['9:30', '11:00', '12:30', '14:00', '16:00'].map((time) => (
+                          <span key={time}>{time}</span>
+                        ))}
+                        {chartTimePeriod === '1m' && ['1w', '2w', '3w', '4w'].map((time) => (
+                          <span key={time}>{time}</span>
+                        ))}
+                        {chartTimePeriod === '6m' && ['1m', '2m', '3m', '4m', '5m', '6m'].map((time) => (
+                          <span key={time}>{time}</span>
+                        ))}
+                        {chartTimePeriod === '1y' && ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'].map((time) => (
+                          <span key={time}>{time}</span>
+                        ))}
+                        {chartTimePeriod === 'max' && ['2019', '2020', '2021', '2022', '2023'].map((time) => (
+                          <span key={time}>{time}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+            
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Market Cap</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{stock.marketCap}</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Volume</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{stock.volume}</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Avg Volume</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{stock.avgVolume}</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">High Today</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatCurrency(stock.high)}</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Low Today</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatCurrency(stock.low)}</p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Previous Close</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatCurrency(stock.previousClose)}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Trading Panel */}
+          <div className={`${activeTab === 'account' ? 'block' : 'hidden md:block'}`}>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Trade {stock.symbol}</h2>
+              
+              {/* Account Overview */}
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Account Balance:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(userPortfolio?.accountBalance || 0)}</span>
+                </div>
+                
+                {userPortfolio?.stockHoldings && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Shares Owned:</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{formatQuantity(userPortfolio.stockHoldings.quantity)}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Transaction Type */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Transaction Type</label>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setTransactionType('BUY')}
+                    className={`flex-1 py-2 px-4 rounded-md font-medium ${
+                      transactionType === 'BUY'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    Buy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTransactionType('SELL')}
+                    className={`flex-1 py-2 px-4 rounded-md font-medium ${
+                      transactionType === 'SELL'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                    disabled={!userPortfolio?.stockHoldings}
+                  >
+                    Sell
+                  </button>
+                </div>
+                {transactionType === 'SELL' && !userPortfolio?.stockHoldings && (
+                  <p className="mt-2 text-sm text-red-500">You don't own any shares of {stock.symbol}</p>
+                )}
+              </div>
+              
+              {/* Quantity Input */}
+              <div className="mb-6">
+                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Quantity
+                </label>
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => quantity > 1 && setQuantity(quantity - 1)}
+                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-l-md text-gray-700 dark:text-gray-300"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    id="quantity"
+                    name="quantity"
+                    min="1"
+                    value={quantity}
+                    onChange={handleQuantityChange}
+                    className="w-full py-2 px-3 border-none focus:outline-none focus:ring-0 text-center text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-r-md text-gray-700 dark:text-gray-300"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              
+              {/* Stock Price & Total */}
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Stock Price:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(stock.price)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Total Cost:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(calculateTotalCost())}</span>
+                </div>
+              </div>
+              
+              {/* Submit Button */}
+              <button
+                type="button"
+                onClick={handleTransaction}
+                disabled={processing || (transactionType === 'SELL' && !userPortfolio?.stockHoldings)}
+                className={`w-full py-3 px-4 rounded-lg font-semibold ${
+                  processing 
+                    ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-300 cursor-not-allowed' 
+                    : transactionType === 'BUY'
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                }`}
+              >
+                {processing ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    {transactionType === 'BUY' ? <FaMoneyBillWave className="mr-2" /> : <FaExchangeAlt className="mr-2" />}
+                    {transactionType === 'BUY' ? 'Buy' : 'Sell'} {stock.symbol}
+                  </span>
+                )}
+              </button>
+              
+              {/* Warning or Notice */}
+              <p className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
+                {transactionType === 'BUY'
+                  ? "Market orders will be executed at the current market price. Prices may change quickly in volatile markets."
+                  : "Market sell orders will be executed at the current market price, which may differ from the price shown."
+                }
+              </p>
             </div>
           </div>
         </div>

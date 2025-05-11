@@ -176,223 +176,181 @@ export default function PortfolioPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="heading-1 mb-4">My Portfolio</h2>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Portfolio</h1>
           <p className="text-gray-600 dark:text-gray-300">Track your investments and performance</p>
         </div>
-
+        
         {/* Portfolio Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Account Balance</h3>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(portfolioData.accountBalance)}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Available for trading</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Available for trading</p>
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Investment</h3>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Invested Amount</h3>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(portfolioData.totalInvestment)}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Cost basis of all holdings</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Cost basis</p>
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Current Value</h3>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(portfolioData.totalCurrentValue)}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Market value of holdings</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Market value</p>
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Gain/Loss</h3>
-            <div className="flex items-center">
-              <p className={`text-2xl font-bold ${portfolioData.totalGainLoss >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                {formatCurrency(portfolioData.totalGainLoss)}
-              </p>
-              <span className={`ml-2 text-sm font-medium ${portfolioData.totalGainLoss >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                {portfolioData.totalGainLoss >= 0 ? <FaCaretUp className="inline" /> : <FaCaretDown className="inline" />}
-                {formatPercentage(portfolioData.totalGainLossPercent)}
-              </span>
+            <p className={`text-2xl font-bold ${portfolioData.totalGainLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(portfolioData.totalGainLoss)} ({formatPercentage(portfolioData.totalGainLossPercent)})
+            </p>
+            <div className="flex items-center mt-1">
+              <span className={`inline-block h-2 w-2 rounded-full mr-1 ${
+                portfolioData.totalGainLoss >= 0 ? 'bg-green-600' : 'bg-red-600'
+              }`}></span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Overall return</span>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Overall performance</p>
           </div>
         </div>
-
-        {/* Portfolio Holdings */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-            <h3 className="heading-2 mb-2 sm:mb-0">My Holdings</h3>
-            <div className="flex space-x-2">
-              <button 
-                onClick={() => setViewMode('all')} 
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewMode === 'all' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}
-              >
-                All
-              </button>
-              <button 
-                onClick={() => setViewMode('gainers')} 
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewMode === 'gainers' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}
-              >
-                Gainers
-              </button>
-              <button 
-                onClick={() => setViewMode('losers')} 
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewMode === 'losers' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}
-              >
-                Losers
-              </button>
-            </div>
+        
+        {/* View Toggles */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 sm:mb-0">Portfolio Holdings</h2>
+          <div className="inline-flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                viewMode === 'all' 
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              onClick={() => setViewMode('all')}
+            >
+              <FaList className="inline mr-1" /> All
+            </button>
+            <button
+              className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                viewMode === 'gainers' 
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              onClick={() => setViewMode('gainers')}
+            >
+              <FaCaretUp className="inline mr-1 text-green-600" /> Gainers
+            </button>
+            <button
+              className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                viewMode === 'losers' 
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              onClick={() => setViewMode('losers')}
+            >
+              <FaCaretDown className="inline mr-1 text-red-600" /> Losers
+            </button>
           </div>
-
-          {portfolioData.stocks.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
-                <FaChartBar className="text-blue-600 dark:text-blue-400 text-2xl" />
-              </div>
-              <h3 className="heading-3 mb-2">No Stocks in Your Portfolio</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">Start building your portfolio by buying some stocks.</p>
-              <Link href="/stocks" className="btn-primary py-2 px-6">
-                Browse Stocks
-              </Link>
+        </div>
+        
+        {/* Holdings Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mb-8">
+          {getFilteredStocks().length === 0 ? (
+            <div className="text-center py-16 px-4">
+              {portfolioData.stocks.length === 0 ? (
+                <>
+                  <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No stocks in your portfolio</h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">Start building your portfolio by buying some stocks.</p>
+                  <Link href="/stocks" className="btn-primary inline-block">
+                    Explore Stocks
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No {viewMode} in your portfolio</h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">Try changing the filter to see more stocks.</p>
+                  <button 
+                    onClick={() => setViewMode('all')} 
+                    className="btn-light inline-block"
+                  >
+                    View All Stocks
+                  </button>
+                </>
+              )}
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Stock</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Quantity</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Avg. Buy Price</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Current Price</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Market Value</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Gain/Loss</th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {getFilteredStocks().map((stock: any) => (
-                      <tr key={stock.symbol} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-white">{stock.symbol}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">{stock.companyName}</div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Stock
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Quantity
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Avg. Cost
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Current Price
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Market Value
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Gain/Loss
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {getFilteredStocks().map((stock: any, index: number) => (
+                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {stock.symbol}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {stock.companyName}
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">{stock.quantity}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">{formatCurrency(stock.avgBuyPrice)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">{formatCurrency(stock.currentPrice)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(stock.value)}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`flex items-center text-sm font-medium ${stock.gainLoss >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {stock.gainLoss >= 0 ? <FaCaretUp className="mr-1" /> : <FaCaretDown className="mr-1" />}
-                            {formatCurrency(stock.gainLoss)} ({formatPercentage(stock.gainLossPercent)})
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Link 
-                            href={`/stocks/${stock.symbol.toLowerCase()}`}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
-                          >
-                            <FaEye className="inline mr-1" /> View
-                          </Link>
-                          <button
-                            onClick={() => router.push(`/stocks/${stock.symbol.toLowerCase()}`)}
-                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                          >
-                            Trade
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile View for Portfolio Holdings */}
-        <div className="lg:hidden mt-6">
-          <div className="grid grid-cols-1 gap-4">
-            {getFilteredStocks().length > 0 ? (
-              getFilteredStocks().map((stock: any) => (
-                <div key={stock.symbol} className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-bold text-lg text-gray-900 dark:text-white">{stock.symbol}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{stock.companyName}</p>
-                      </div>
-                      <div className={`text-sm font-semibold ${stock.gainLoss >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {stock.gainLoss >= 0 ? <FaCaretUp className="inline" /> : <FaCaretDown className="inline" />}
-                        {formatPercentage(stock.gainLossPercent)}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Quantity</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{stock.quantity}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Market Value</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(stock.value)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Avg. Buy Price</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(stock.avgBuyPrice)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Current Price</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(stock.currentPrice)}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Gain/Loss</p>
-                        <p className={`text-sm font-medium ${stock.gainLoss >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-900 dark:text-white">
+                        {stock.quantity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                        {formatCurrency(stock.avgBuyPrice)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
+                        {formatCurrency(stock.currentPrice)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
+                        {formatCurrency(stock.value)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className={`text-sm font-medium ${stock.gainLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(stock.gainLoss)}
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Link
-                          href={`/stocks/${stock.symbol.toLowerCase()}`}
-                          className="text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 py-2 px-3 rounded-lg text-gray-800 dark:text-gray-200"
-                        >
+                        </div>
+                        <div className={`text-xs ${stock.gainLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stock.gainLoss >= 0 ? '+' : ''}{formatPercentage(stock.gainLossPercent)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <Link href={`/stocks/${stock.symbol}`} className="btn-light-xs">
+                          <FaEye className="inline-block mr-1" />
                           View
                         </Link>
-                        <Link
-                          href={`/stocks/${stock.symbol.toLowerCase()}`}
-                          className="text-sm bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg"
-                        >
-                          Trade
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center">
-                <p className="text-gray-500 dark:text-gray-400">
-                  {viewMode === 'gainers' 
-                    ? 'No profitable stocks in your portfolio.' 
-                    : viewMode === 'losers' 
-                      ? 'No stocks with losses in your portfolio.' 
-                      : 'No stocks in your portfolio.'}
-                </p>
-              </div>
-            )}
-          </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </main>
     </div>
